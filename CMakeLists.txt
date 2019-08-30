@@ -18,11 +18,17 @@
 #    USA
 #
 
-cmake_minimum_required (VERSION 2.8)
+# cmake_minimum_required (VERSION 2.8)
+
+# Use new c++ features
+cmake_minimum_required (VERSION 3.0.0)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 
 # prevent expansion of quoted things that could be variables in if()
 if(${CMAKE_VERSION} VERSION_GREATER 3.1)
-    cmake_policy(SET CMP0054 NEW)
+  cmake_policy(SET CMP0054 NEW)
 endif()
 
 # this is the root libplctag project
@@ -253,6 +259,11 @@ endif()
 set_source_files_properties("${example_SRC_PATH}/simple_cpp.cpp" PROPERTIES COMPILE_FLAGS ${BASE_CXX_FLAGS})
 add_executable (simple_cpp "${example_SRC_PATH}/simple_cpp.cpp" "${example_SRC_PATH}/${example_PROG_UTIL}" "${example_SRC_PATH}/utils.h" )
 target_link_libraries (simple_cpp ${example_LIBRARIES} )
+
+# modbot example
+set_source_files_properties("${example_SRC_PATH}/modbot.cpp" PROPERTIES COMPILE_FLAGS ${BASE_CXX_FLAGS})
+add_executable (modbot "${example_SRC_PATH}/modbot.cpp" "${example_SRC_PATH}/${example_PROG_UTIL}" "${example_SRC_PATH}/utils.h" )
+target_link_libraries (modbot ${example_LIBRARIES} )
 
 
 foreach ( example ${example_PROGRAMS} )

@@ -43,6 +43,8 @@ Ankh.NoLoad
 *.log
 main
 
+build/
+
 .vs/libplctag/v15/Browse.VC.db
 .vs/libplctag/v15/Browse.VC.opendb
 .vs/ProjectSettings.json
