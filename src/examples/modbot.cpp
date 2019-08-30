@@ -14,12 +14,12 @@ const std::string g_cpu = "LGX";
 const std::string g_gateway = "192.168.1.200";
 const std::string g_path = "1,0";  // backplane, slot
 const std::string g_protocol = "ab-eip";
-const std::string g_tag_path = "protocol=ab_eip&gateway=10.206.1.27&path=1,0&cpu=LGX&elem_size=88&elem_count=48&debug=1&name=Loc_Txt";
+// const std::string g_tag_path = "protocol=ab_eip&gateway=10.206.1.27&path=1,0&cpu=LGX&elem_size=88&elem_count=48&debug=1&name=Loc_Txt";
 
-// Strings are 80 bytes, prefaced with 2 bytes of size information (Magna)
-const unsigned int STRING_DATA_SIZE = 80;
-const unsigned int STRING_SIZE_PADDING_SIZE = 2;
-const unsigned int STRING_SIZE = 82;
+// Strings are 82 bytes, prefaced with 4 bytes of size information (Magna)
+const unsigned int STRING_DATA_SIZE = 82;
+const unsigned int STRING_SIZE_PADDING_SIZE = 4;
+const unsigned int STRING_SIZE = 88;  // 2 bytes padding at the end to make multiple of 4 bytes, 32 bit
 
 std::function<void(void)> l_sig_handler;
 bool g_run = true;
@@ -65,7 +65,7 @@ const char* create_tag_path(std::string name, unsigned int e_size, unsigned int 
 }
 
 std::string plc_tag_get_string(int32_t tag) {
-  int str_size = plc_tag_get_int16(tag, STRING_SIZE);
+  int str_size = plc_tag_get_int32(tag, 0);
   char str[STRING_SIZE] = {0};
   int j;
 
@@ -82,11 +82,11 @@ void plc_tag_set_string(int32_t tag, std::string str) {
   int base_offset = 0;  // Only used in string arrays (would be i * STRING_SIZE);
 
   /* now write the data */
-  int16_t str_index = 0;
-  int16_t str_len = static_cast<int16_t>(str.length());
+  int32_t str_index = 0;
+  int32_t str_len = static_cast<int32_t>(str.length());
 
   /* set the length - 2 bytes */
-  plc_tag_set_int16(tag, base_offset, str_len);
+  plc_tag_set_int32(tag, base_offset, str_len);
 
   /* copy the data */
   while ((str_index < str_len) && (str_index < STRING_DATA_SIZE)) {
@@ -126,6 +126,7 @@ int main() {
   tags["SequenceRun"] = plc_tag_create(create_tag_path("SequenceRun", 1, 1), g_data_timeout);
   tags["State"] = plc_tag_create(create_tag_path("State", 2, 1), g_data_timeout);
   for (auto& kv : tags) {
+    fprintf(stdout, "- Confirming creation of tag \"%s\" - %i\n", kv.first.c_str(), kv.second);
     if (kv.second < 0) {
       fprintf(stdout, "ERROR: Could not create tag \"%s\" - %s\n", kv.first.c_str(), plc_tag_decode_error(kv.second));
       return 0;
@@ -205,6 +206,7 @@ int main() {
       return 0;
     }
   
+    usleep(100000);
   }
 
   // Delete tags

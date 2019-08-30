@@ -32,8 +32,8 @@
  */
 
 
-#define TAG_PATH "protocol=ab_eip&gateway=192.168.1.200&path=1,0&cpu=LGX&elem_size=82&elem_count=1&debug=3&name=SequenceName&debug=4"
-#define ELEM_COUNT 48
+#define TAG_PATH "protocol=ab_eip&gateway=192.168.1.200&path=1,0&cpu=LGX&elem_size=88&elem_count=1&name=SequenceName&debug=4"
+#define ELEM_COUNT 1
 #define ELEM_SIZE 88
 #define DATA_TIMEOUT 5000
 
@@ -69,12 +69,12 @@ int main()
 
     /* print out the data */
     for(i=0; i < ELEM_COUNT; i++) {
-        int str_size = plc_tag_get_int16(tag,(i*ELEM_SIZE));
+        int str_size = plc_tag_get_int32(tag, (i * ELEM_SIZE));
         char str[ELEM_SIZE] = {0};
         int j;
 
         for(j=0; j<str_size; j++) {
-            str[j] = (char)plc_tag_get_uint8(tag,(i*ELEM_SIZE)+j+2);
+            str[j] = (char)plc_tag_get_uint8(tag,(i * ELEM_SIZE) + j + 4);
         }
         str[j] = (char)0;
 
