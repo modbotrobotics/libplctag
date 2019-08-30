@@ -11,12 +11,15 @@
 const unsigned int g_data_timeout = 5000;
 const unsigned int g_debug = 4;
 const std::string g_cpu = "LGX";
-const std::string g_gateway = "192.168.1.1";
+const std::string g_gateway = "192.168.1.200";
 const std::string g_path = "1,0";  // backplane, slot
 const std::string g_protocol = "ab-eip";
 const std::string g_tag_path = "protocol=ab_eip&gateway=10.206.1.27&path=1,0&cpu=LGX&elem_size=88&elem_count=48&debug=1&name=Loc_Txt";
-const unsigned int STRING_DATA_SIZE = 82;
-const unsigned int STRING_SIZE = 88;
+
+// Strings are 80 bytes, prefaced with 2 bytes of size information (Magna)
+const unsigned int STRING_DATA_SIZE = 80;
+const unsigned int STRING_SIZE_PADDING_SIZE = 2;
+const unsigned int STRING_SIZE = 82;
 
 std::function<void(void)> l_sig_handler;
 bool g_run = true;
@@ -62,12 +65,12 @@ const char* create_tag_path(std::string name, unsigned int e_size, unsigned int 
 }
 
 std::string plc_tag_get_string(int32_t tag) {
-  int str_size = plc_tag_get_int32(tag, STRING_SIZE);
+  int str_size = plc_tag_get_int16(tag, STRING_SIZE);
   char str[STRING_SIZE] = {0};
   int j;
 
   for(j = 0; j < str_size; j++) {
-    str[j] = (char)plc_tag_get_uint8(tag, j + 4);
+    str[j] = (char)plc_tag_get_uint8(tag, j + STRING_SIZE_PADDING_SIZE);
   }
   str[j] = (char)0;
 
@@ -79,21 +82,21 @@ void plc_tag_set_string(int32_t tag, std::string str) {
   int base_offset = 0;  // Only used in string arrays (would be i * STRING_SIZE);
 
   /* now write the data */
-  int32_t str_index = 0;
-  int32_t str_len = static_cast<int32_t>(str.length());
+  int16_t str_index = 0;
+  int16_t str_len = static_cast<int16_t>(str.length());
 
-  /* set the length */
-  plc_tag_set_int32(tag, base_offset, str_len);
+  /* set the length - 2 bytes */
+  plc_tag_set_int16(tag, base_offset, str_len);
 
   /* copy the data */
   while ((str_index < str_len) && (str_index < STRING_DATA_SIZE)) {
-    plc_tag_set_uint8(tag, base_offset + 4 + str_index, (uint8_t)str[str_index]);
+    plc_tag_set_uint8(tag, base_offset + STRING_SIZE_PADDING_SIZE + str_index, (uint8_t)str[str_index]);
     str_index++;
   }
 
   /* pad with zeros */
   while(str_index < STRING_DATA_SIZE) {
-    plc_tag_set_uint8(tag, base_offset + 4 + str_index, 0);
+    plc_tag_set_uint8(tag, base_offset + STRING_SIZE_PADDING_SIZE + str_index, 0);
     str_index++;
   }
 }
@@ -117,9 +120,9 @@ int main() {
     tags[key] = 0;
   }
 
-  tags["FaultMessage"] = plc_tag_create(create_tag_path("FaultMessage", 88, 1), g_data_timeout);
+  tags["FaultMessage"] = plc_tag_create(create_tag_path("FaultMessage", STRING_SIZE, 1), g_data_timeout);
   tags["Mode"] = plc_tag_create(create_tag_path("Mode", 2, 1), g_data_timeout);
-  tags["SequenceName"] = plc_tag_create(create_tag_path("SequenceName", 88, 1), g_data_timeout);
+  tags["SequenceName"] = plc_tag_create(create_tag_path("SequenceName", STRING_SIZE, 1), g_data_timeout);
   tags["SequenceRun"] = plc_tag_create(create_tag_path("SequenceRun", 1, 1), g_data_timeout);
   tags["State"] = plc_tag_create(create_tag_path("State", 2, 1), g_data_timeout);
   for (auto& kv : tags) {
